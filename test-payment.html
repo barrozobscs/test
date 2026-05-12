@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Station Checkout</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; background-color: #f4f7f6; }
+        .checkout-card { background: white; padding: 30px; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .item-details { border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        button { background-color: #007bff; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="checkout-card">
+    <h2>Water Station Order</h2>
+    
+    <div class="item-details">
+        <p><strong>Item:</strong> 20-Liter Purified Water Refill</p>
+        <p><strong>Quantity:</strong> 5</p>
+        <p><strong>Price per item:</strong> ₱50.00</p>
+        <p><strong>Total:</strong> ₱250.00</p>
+    </div>
+
+    <button id="pay-button" onclick="createCheckoutSession()">Pay with GCash / Card</button>
+    <p id="status-message" style="color: green; font-size: 14px; text-align: center; display: none;">Processing your secure link...</p>
+</div>
+
+<script>
+    async function createCheckoutSession() {
+        const payButton = document.getElementById('pay-button');
+        const statusMessage = document.getElementById('status-message');
+        
+        // Disable button to prevent multiple clicks
+        payButton.disabled = true;
+        statusMessage.style.display = 'block';
+
+        try {
+            // We are now fetching from YOUR local Node.js backend, not PayMongo directly
+            const response = await fetch('/create-checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // We just send the customer details to the backend. 
+                // The backend handles the secret key and the item prices.
+                body: JSON.stringify({
+                    name: "Juan Dela Cruz",
+                    email: "juan@example.com"
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.url) {
+                // Success! Redirect the user to the secure PayMongo checkout page
+                window.location.href = data.url;
+            } else {
+                console.error("Backend Error:", data.error);
+                alert("Failed to generate payment link. Check your server console.");
+                payButton.disabled = false;
+                statusMessage.style.display = 'none';
+            }
+        } catch (err) {
+            console.error("Network Error:", err);
+            alert("Could not connect to the backend server. Make sure 'node server.js' is running.");
+            payButton.disabled = false;
+            statusMessage.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
